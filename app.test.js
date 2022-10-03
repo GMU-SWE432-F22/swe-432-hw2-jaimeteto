@@ -63,7 +63,7 @@ describe("GET /exercise/:id", () => {
   test("should return exercise with specified id number ", async () => {
     
     //await new Promise((r) => setTimeout(r, 10000));
-    const response = await request(app).get("/exercise/1");
+    const response = await request(app).get("/exercise/0001");
 
     var id = response.body.id
     expect(id).toBe("0001");
