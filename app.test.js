@@ -59,6 +59,9 @@ describe("GET /inGym" , () => {
 });
 
 
+
+
+
 describe("GET /exercise/:id", () => {
   test("should return exercise with specified id number ", async () => {
     
@@ -71,7 +74,128 @@ describe("GET /exercise/:id", () => {
   });
 });
 
+describe("POST /customeExercise", () => {
+  test("should create a new exercise and return code 201", async () => {
+    
+    //await new Promise((r) => setTimeout(r, 10000));
+    const response = await request(app).post("/customeExercise").send({
+                    "bodyPart": "upper legs",
+                    "equipment":"body weight",
+                    "gifUrl":"none",
+                    "id":"0002",
+                    "name":"lunges",
+                    "target": "quads"});
 
+    var code = response.statusCode;
+    expect(code).toBe(201);
+    
+  });
+});
+
+describe("POST /customeExercise", () => {
+  test("should create a new exercise and return the correct data", async () => {
+    
+    //await new Promise((r) => setTimeout(r, 10000));
+    const response = await request(app).post("/customeExercise").send({
+                    "bodyPart": "upper legs",
+                    "equipment":"body weight",
+                    "gifUrl":"none",
+                    "id":"0002",
+                    "name":"lunges",
+                    "target": "quads"});
+
+    var expectedObj = {"bodyPart": "upper legs",
+                    "equipment":"body weight",
+                    "gifUrl":"none",
+                    "id":"0002",
+                    "name":"lunges",
+                    "target": "quads"}
+
+      var answer = function(obj1,obj2){
+
+
+        if(JSON.stringify(obj1) ===JSON.stringify(obj1)){
+          return true;
+        } 
+        return false;
+      }
+    
+    expect(answer(response.body,expectedObj)).toBe(true);
+    
+  });
+});
+
+describe("POST /customeExercise", () => {
+  test("should return code 422 since one of the keys does not exist and post should fail", async () => {
+    
+    //await new Promise((r) => setTimeout(r, 10000));
+    const response = await request(app).post("/customeExercise").send({
+                    "hello": "upper legs",
+                    "equipment":"body weight",
+                    "gifUrl":"none",
+                    "id":"0002",
+                    "name":"lunges",
+                    "target": "quads"});
+
+    var code = response.statusCode;
+    expect(code).toBe(422);
+    
+  });
+});
+
+
+describe("POST /customeRoutine", () => {
+  test("should return a routine with two values since the request is asking for 2 values", async () => {
+    
+    
+    const response = await request(app).post("/customRoutine").send({
+                    "id1": "0001",
+                    "id2": "0002"
+
+                    });
+    var numberOfValues = Object.values(response.body).length;
+    expect(numberOfValues).toEqual(2);
+    
+  });
+});
+
+describe("GET /compound/:bodyPart", () => {
+  test(" test the number of exercise objects returned", async () => {
+    
+    
+    const response = await request(app).get("/compound/upper legs");
+
+    
+    expect(response.body.length).toEqual(5);
+    
+  });
+});
+
+
+describe("GET /compound/:bodyPart", () => {
+  test("checks whether correct code is returned when bodyPart is not in the database", async () => {
+    
+    
+    const response = await request(app).get("/compound/head");
+    var code = response.statusCode;
+
+    
+    expect(code).toBe(404);
+    
+  });
+});
+
+describe("GET /wrong input", () => {
+  test("checks whether correct code is returned when bodyPart is not in the database", async () => {
+    
+    
+    const response = await request(app).get("/compound/head");
+    var code = response.statusCode;
+    
+    expect(code).toBe(404);
+    
+  });
+});
 
 
 

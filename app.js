@@ -5,6 +5,8 @@ const category = require('./mod1.js') // used for grouping workouts
 
 const createRoutine = require('./mod2.js') 
 const port = 3000
+app.use(express.json());
+app.use(express.urlencoded({extended:false}));
 
 
 class allWorkouts{
@@ -20,7 +22,7 @@ class allWorkouts{
     const options = {
   method: 'GET',
   headers: {
-    'X-RapidAPI-Key': 'c73732dc00msh800399b6d97a10bp1f6ff1jsn74c866fc97eb',
+    'X-RapidAPI-Key': '8ea0bd5848msh623aa774c6033b3p17beb2jsn8cfef70a0b1c',
     'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com'
   }};
      var workouts = await fetch(url,options).then(res => {return res.json()}).catch(function(error){
@@ -40,7 +42,7 @@ class allWorkouts{
 const bodyParts= 'https://exercisedb.p.rapidapi.com/exercises/bodyPartList';
 const completeData = 'https://exercisedb.p.rapidapi.com/exercises';
 var data1 = new allWorkouts(completeData);/// dat1 contains all exercises
-
+var newExercises =[];
 //getting list of bodyparts
 var data2 = new allWorkouts(bodyParts);//this contains a list of all possible body parts
 
@@ -167,7 +169,6 @@ app.get('/inGym/:bodyPart?/:numberOfExercises?', (req, res) => {
   
 //group all workouts that do not require gym equipment
   var assistedGroup = new category();
-  console.log("im here");
   var dataa = assistedGroup.gymEquipment(alldata);
 
 
@@ -253,15 +254,14 @@ app.get('/compound/:bodyPart', (req, res) => {
 
   if((!Object.values(bodyParts1).includes(bodyPart)) && (bodyPart != "none")) {
       
-
       return res.status(404).send({message:"Not  Found"});
   }
 //end of error handling
 ////////////////////////////////////////////////////////////////
-//this is a sample of equipment that is used in compound
+//this is a sample of equipment that is used in compound exercises
 var equipmentTargeted1 = ["body weight","barbell","olympic barbell"];
 var equipmentTargeted2 =["smith machine","sled machine","kettlebell"];
-//group all workouts that are considered targeted exercises
+//group all workouts that are considered compund exercises
 
 async function grouptWorkouts(bodyPart){
   var assistedGroup = new category();
@@ -285,59 +285,65 @@ var result = grouptWorkouts(bodyPart).then(result =>res.send( result));
 
 
 //posts a new workout
-app.post('/customeExercise/:exerciseName/:equipment/:target/:bodyPart/:id',(req,res)=>{
-
+//app.post('/customeExercise/:exerciseName/:equipment/:target/:bodyPart/:id',(req,res)=>{
+app.post('/customeExercise',(req,res)=>{
   /// this route is used to add a new workout to a database
- 
 
-let newWorkout = {
-bodyPart: req.params.bodyPart,
-equipment:req.params.exerciseName,
+const validKeys=["bodyPart","equipment","gifUrl","id","name","target"]
+
+ for (var key in req.body){
+
+    if (!validKeys.includes(key)){
+        return res.status(422).send("invalid input");
+    }
+ }
+
+var newWorkout = {
+bodyPart: req.body.bodyPart,
+equipment:req.body.exerciseName,
 gifUrl:"none",
-id:req.params.id,
-name:req.params.exerciseName,
-target: req.params.target}
+id:req.body.id,
+name:req.body.name,
+target: req.body.target
+};
 
-  var result = res.send(newWorkout);
+  var result = res.status(201).send(newWorkout);
     
 })
 
-app.post('/customRoutine/:exercise1ID/:exercise2ID/:exercise3ID/:exercise4ID/:exercise5ID',(req,res)=>{
+
+
+
+app.post('/customRoutine',(req,res)=>{
 
   //this route is used to create a custom routine of 5 exercises
-
-  var data1 = new allWorkouts(completeData);
   
-    var idArray =[];
-    let id1 = req.params.exercise1ID;
-    let id2 = req.params.exercise2ID;
-    let id3 = req.params.exercise3ID;
-    let id4 = req.params.exercise4ID;
-    let id5 = req.params.exercise5ID;
-    idArray.push(id1);
-    idArray.push(id2);
-    idArray.push(id3);
-    idArray.push(id4);
-    idArray.push(id5);
+    var responseBody=req.body;
+
 
   async function getValues (){
 
     var finalResult =[];
 
-  for (id of idArray){
+  for (var key in responseBody){
+    var id = responseBody[key];
+
       const idURL = `https://exercisedb.p.rapidapi.com/exercises/exercise/${id}`;
-      value = new allWorkouts(idURL);
-       result = await  value.workouts().then(res=>finalResult.push(res));
+      var value = new allWorkouts(idURL);
+       var result = await  value.workouts().then(res=>finalResult.push(res));
 
-    }
+    
 
 
-    return finalResult
+    
   }
+  return finalResult
+}
 
-  var response = getValues().then(res1=> res.send(res1));
+  var response = getValues().then(res1=> response = res1).then(res2 =>res.status(201).send(res2));
+  
 
-})
+});
 
 app.use((req, res,next) => {
     res.status(404).send({message:"Not  Found"});
